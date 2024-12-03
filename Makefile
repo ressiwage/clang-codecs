@@ -11,13 +11,15 @@ fetch_small_bunny_video:
 	./fetch_bbb_video.sh
 
 make_hello: clean
-	docker run -w /files --rm -it  -v `pwd`:/files leandromoreira/ffmpeg-devel:4.4 \
-	  gcc -L/opt/ffmpeg/lib -I/opt/ffmpeg/include/ /files/0_hello_world.c \
-	  -lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil \
-	  -o /files/build/hello
+	gcc -L/opt/ffmpeg/lib -I/opt/ffmpeg/include/ 0_hello_world.c \
+		-lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil \
+		-o ./build/hello
 
-run_hello: make_hello
-	docker run -w /files --rm -it -v `pwd`:/files leandromoreira/ffmpeg-devel:4.4 /files/build/hello /files/small_bunny_1080p_60fps.mp4
+run_hello: 
+	./build/hello /home/ressiwage/projects/frames-decoding/b264t.mkv 
+
+run_test:
+	cmdbench --iterations 2 --print-averages --print-values --save-json bench.json --save-plot=plot.png "make run_hello" && cd temp && python3 ../pgms_to_pngs.py && cd ..
 
 make_remuxing: clean
 	docker run -w /files --rm -it  -v `pwd`:/files leandromoreira/ffmpeg-devel:4.4 \
