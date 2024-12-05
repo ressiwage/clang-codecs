@@ -18,8 +18,25 @@ make_hello: clean
 run_hello: 
 	./build/hello /home/ressiwage/projects/frames-decoding/b264t.mkv 
 
-run_test:
+run_hello_short:
+	./build/hello /home/ressiwage/projects/test-libav/test-decoding/small_bunny_1080p_60fps.mp4
+
+run_test: make_hello
 	cmdbench --iterations 2 --print-averages --print-values --save-json bench.json --save-plot=plot.png "make run_hello" && cd temp && python3 ../pgms_to_pngs.py && cd ..
+
+T_T_S = /home/ressiwage/projects/test-libav/test-decoding/small-bunny-lowres.mp4
+T_T_S = /home/ressiwage/projects/test-libav/test-decoding/small_bunny_1080p_60fps.mp4
+# T_T_S = /home/ressiwage/projects/frames-decoding/b264t.mkv 
+# T_T_S = /home/ressiwage/projects/frames-decoding/b264t_half.mp4
+
+run_test_short: make_hello
+	cmdbench --iterations 2 --print-averages --print-values --save-json bench.json --save-plot=plot.png "./build/hello  $(T_T_S)" && \
+	cd temp && python3 ../pgms_to_pngs.py && cd .. 
+
+trace_test_short: make_hello
+	ltrace -c -S ./build/hello  $(T_T_S)
+
+trace_bench: run_test_short trace_test_short
 
 make_remuxing: clean
 	docker run -w /files --rm -it  -v `pwd`:/files leandromoreira/ffmpeg-devel:4.4 \

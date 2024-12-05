@@ -122,6 +122,8 @@ int main(int argc, const char *argv[])
         video_stream_index = i;
         pCodec = pLocalCodec;
         pCodecParameters = pLocalCodecParameters;
+
+        printf("cn: %s\n", pLocalCodec->long_name);
       }
 
       logging("Video Codec: resolution %d x %d", pLocalCodecParameters->width, pLocalCodecParameters->height);
@@ -151,6 +153,7 @@ int main(int argc, const char *argv[])
 
   // Fill the codec context based on the values from the supplied codec parameters
   // https://ffmpeg.org/doxygen/trunk/group__lavc__core.html#gac7b282f51540ca7a99416a3ba6ee0d16
+
   if (avcodec_parameters_to_context(pCodecContext, pCodecParameters) < 0)
   {
     logging("failed to copy codec params to codec context");
@@ -194,12 +197,11 @@ int main(int argc, const char *argv[])
     {
       counter++;
       // logging("AVPacket->pts %" PRId64, pPacket->pts);
-      if (counter % 20 == 0)
-      {
-        response = decode_packet(pPacket, pCodecContext, pFrame, counter);
-        if (response < 0)
-          break;
-      }
+
+      response = decode_packet(pPacket, pCodecContext, pFrame, counter);
+      if (response < 0)
+        break;
+
       // stop it, otherwise we'll be saving hundreds of frames
       // if (--how_many_packets_to_process <= 0) break;
     }
@@ -240,8 +242,6 @@ static int decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext, AVFra
   long long unsigned int counter = 1;
   while (response >= 0)
   {
-    // Return decoded output data (into a frame) from a decoder
-    // https://ffmpeg.org/doxygen/trunk/group__lavc__decoding.html#ga11e6542c4e66d3028668788a1a74217c
     response = avcodec_receive_frame(pCodecContext, pFrame);
     if (response == AVERROR(EAGAIN) || response == AVERROR_EOF)
     {
@@ -255,28 +255,22 @@ static int decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext, AVFra
 
     if (response >= 0)
     {
+      // success
+
       // logging(
-      //     "Frame %d (type=%c, size=%d bytes, format=%d) pts %d key_frame %d ",
+      //     "Frame %d (type=%c, size=%d bytes, format=%d) pts %d key_frame %d ");
       //     pCodecContext->frame_num,
       //     av_get_picture_type_char(pFrame->pict_type),
-      //     pFrame->pkt_size,
-      //     pFrame->format,
-      //     pFrame->pts,
-      //     pFrame->key_frame);
+      //    pFrame->pkt_size,
+      //    pFrame->format,
+      //    pFrame->pts,
+      //    pFrame->key_frame);
 
       char frame_filename[1024];
       snprintf(frame_filename, sizeof(frame_filename), "%s-%d.pgm", "frame", pCodecContext->frame_num);
-      // Check if the frame is a planar YUV 4:2:0, 12bpp
-      // That is the format of the provided .mp4 file
-      // RGB formats will definitely not give a gray image
-      // Other YUV image may do so, but untested, so give a warning
-      if (pFrame->format != AV_PIX_FMT_YUV420P)
-      {
-        logging("Warning: the generated file may not be a grayscale image, but could e.g. be just the R component if the video format is RGB");
-      }
       // save a grayscale frame into a .pgm file
       if (save_f % 10000 == 0)
-        save_gray_frame(pFrame->data[0], pFrame->linesize[0], pFrame->width, pFrame->height, frame_filename);
+           save_gray_frame(pFrame->data[0], pFrame->linesize[0], pFrame->width, pFrame->height, frame_filename);
     }
   }
   return 0;
