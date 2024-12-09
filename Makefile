@@ -11,7 +11,7 @@ fetch_small_bunny_video:
 	./fetch_bbb_video.sh
 
 make_hello: clean
-	gcc -L/opt/ffmpeg/lib -I/opt/ffmpeg/include/ 0_hello_world.c \
+	gcc -g -L/opt/ffmpeg/lib -I/opt/ffmpeg/include/ 0_hello_world.c \
 		-lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil \
 		-o ./build/hello
 
@@ -26,8 +26,8 @@ run_test: make_hello
 
 T_T_S = /home/ressiwage/projects/test-libav/test-decoding/small-bunny-lowres.mp4
 T_T_S = /home/ressiwage/projects/test-libav/test-decoding/small_bunny_1080p_60fps.mp4
-# T_T_S = /home/ressiwage/projects/frames-decoding/b264t.mkv 
-# T_T_S = /home/ressiwage/projects/frames-decoding/b264t_half.mp4
+T_T_S = /home/ressiwage/projects/frames-decoding/b264t.mkv 
+T_T_S = /home/ressiwage/projects/frames-decoding/b264t_half.mp4
 
 run_test_short: make_hello
 	cmdbench --iterations 2 --print-averages --print-values --save-json bench.json --save-plot=plot.png "./build/hello  $(T_T_S)" && \

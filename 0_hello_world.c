@@ -160,9 +160,12 @@ int main(int argc, const char *argv[])
     return -1;
   }
 
+  AVDictionary * codec_options = NULL;
+  av_dict_set(&codec_options, "preset", "ultrafast", 0);
+
   // Initialize the AVCodecContext to use the given AVCodec.
   // https://ffmpeg.org/doxygen/trunk/group__lavc__core.html#ga11f785a188d7d9df71621001465b0f1d
-  if (avcodec_open2(pCodecContext, pCodec, NULL) < 0)
+  if (avcodec_open2(pCodecContext, pCodec, &codec_options) < 0)
   {
     logging("failed to open codec through avcodec_open2");
     return -1;
