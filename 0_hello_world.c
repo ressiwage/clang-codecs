@@ -56,7 +56,7 @@ int main(int argc, const char *argv[])
   // http://ffmpeg.org/doxygen/trunk/group__lavf__decoding.html#ga31d601155e9035d5b0e7efedc894ee49
   if (avformat_open_input(&pFormatContext, argv[1], NULL, NULL) != 0)
   {
-    logging("ERROR could not open the file");
+    logging("ERROR %d could not open the file", avformat_open_input(&pFormatContext, argv[1], NULL, NULL));
     return -1;
   }
 
@@ -209,7 +209,7 @@ int main(int argc, const char *argv[])
       // if (--how_many_packets_to_process <= 0) break;
     }
     // https://ffmpeg.org/doxygen/trunk/group__lavc__packet.html#ga63d5a489b419bd5d45cfd09091cbcbc2
-    av_packet_unref(pPacket);
+    av_packet_unref(pPacket); //можно удалить??
   }
 
   logging("releasing all the resources");
@@ -243,7 +243,7 @@ static int decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext, AVFra
     return response;
   }
   long long unsigned int counter = 1;
-  while (response >= 0)
+  while (response >= 0) //можно заменить на if
   {
     response = avcodec_receive_frame(pCodecContext, pFrame);
     if (response == AVERROR(EAGAIN) || response == AVERROR_EOF)
@@ -272,7 +272,7 @@ static int decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext, AVFra
       char frame_filename[1024];
       snprintf(frame_filename, sizeof(frame_filename), "%s-%d.pgm", "frame", pCodecContext->frame_num);
       // save a grayscale frame into a .pgm file
-      if (save_f % 10000 == 0)
+      if (0&& save_f % 10000 == 0)
            save_gray_frame(pFrame->data[0], pFrame->linesize[0], pFrame->width, pFrame->height, frame_filename);
     }
   }

@@ -60,13 +60,13 @@ static int decode_packet(const AVPacket *pkt) {
             H264Context *h = (H264Context *)video_dec_ctx->priv_data;
             H264SliceContext *sl = &h->slice_ctx[0];
             
-            int mb_width = (video_dec_ctx->width + 15) >> 4;
-            int mb_height = (video_dec_ctx->height + 15) >> 4;
+            int mb_width = (video_dec_ctx->width + 15) >> 4; // x/2^4
+            int mb_height = (video_dec_ctx->height + 15) >> 4; // x/2^4
             video_frame_count++;
 
             // Only process middle macroblock
-            for (int mb_y = mb_height/2; mb_y < mb_height/2+1; mb_y++) {
-                for (int mb_x = mb_width/2; mb_x < mb_width/2+1; mb_x++) {
+            for (int mb_y =0; mb_y < mb_height-1; mb_y++) {
+                for (int mb_x = 0; mb_x < mb_width-1; mb_x++) {
                     int mb_index = mb_y * mb_width + mb_x;
 
                     if (sl->intra16x16_pred_mode >= 0) {
@@ -112,66 +112,16 @@ static int decode_packet(const AVPacket *pkt) {
                         printf("Frame %d, MB(%d,%d): DC_residual=%d QP=%d Scale=%d Pred=%d Final_DC=%d\n",
                                video_frame_count, mb_x, mb_y, dc_residual, qp, scale_factor, 
                                pred_dc, final_dc);
+                        FILE *fptr;
+                        fptr = fopen("out.txt", "a");
+                        fprintf(fptr, "(%d;%d;%d;%d)", mb_x, mb_y,video_frame_count, final_dc);
+                        fclose(fptr);
                     }
                 }
             }
             
             av_frame_unref(frame);
         }
-    }
-    return 0;
-}
-
-static int decode_packet2(const AVPacket *pkt) {
-    int ret = avcodec_send_packet(video_dec_ctx, pkt);
-    if (ret < 0) {
-        fprintf(stderr, "Error sending packet to decoder: %s\n", av_err2str(ret));
-        return ret;
-    }
-
-    while (ret >= 0) {
-        ret = avcodec_receive_frame(video_dec_ctx, frame);
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-            break;
-        } else if (ret < 0) {
-            fprintf(stderr, "Error receiving frame from decoder: %s\n", av_err2str(ret));
-            return ret;
-        }
-
-        if (ret >= 0) {
-            // Get H264 context from decoder context's private data
-            H264Context *h = (H264Context *)video_dec_ctx->priv_data;
-            H264SliceContext *sl = &h->slice_ctx[0];  // Get first slice context
-            
-            int mb_width = (video_dec_ctx->width + 15) >> 4;
-            int mb_height = (video_dec_ctx->height + 15) >> 4;
-            video_frame_count++;
-
-
-                for (int mb_y = mb_height/2; mb_y < mb_height/2+1; mb_y++) {
-                    for (int mb_x = mb_width/2; mb_x < mb_width/2+1; mb_x++) {
-                        int mb_index = mb_y * mb_width + mb_x;
-                        
-                        // Access transform coefficients from slice context
-                        // For 16x16 intra mode, DC coefficients are in mb_luma_dc
-                        if (sl->intra16x16_pred_mode >= 0) {
-                            int dc_coeff = sl->mb_luma_dc[0][0];  // DC coefficient for current macroblock
-                            printf("16X16 Frame %d, MB(%d,%d): INTRA_16x16 DC=%d\n", 
-                                   video_frame_count, mb_x, mb_y, dc_coeff);
-                        } else {
-                            // For 4x4 mode, coefficients are in the mb array
-                            // First coefficient of each 4x4 block is the DC
-                            for (int block = 0; block < 16; block++) {
-                                int dc_coeff = sl->mb[block * 16];  // DC is first coefficient of block
-                                printf("4x4 Frame %d, MB(%d,%d): INTRA_4x4 Block%d DC=%d\n", 
-                                       video_frame_count, mb_x, mb_y, block, dc_coeff);
-                            }
-                        }
-                    }
-                }
-                
-                av_frame_unref(frame);
-            }
     }
     return 0;
 }

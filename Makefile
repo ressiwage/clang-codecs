@@ -15,19 +15,20 @@ make_hello: clean
 		-lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil \
 		-o ./build/hello
 
-run_hello: 
+run_hello: make_hello
 	./build/hello /home/ressiwage/projects/frames-decoding/b264t.mkv 
 
-run_hello_short:
+run_hello_short: make_hello
 	./build/hello /home/ressiwage/projects/test-libav/test-decoding/small_bunny_1080p_60fps.mp4
 
-run_test: make_hello
-	cmdbench --iterations 2 --print-averages --print-values --save-json bench.json --save-plot=plot.png "make run_hello" && cd temp && python3 ../pgms_to_pngs.py && cd ..
 
 T_T_S = /home/ressiwage/projects/test-libav/test-decoding/small-bunny-lowres.mp4
 T_T_S = /home/ressiwage/projects/test-libav/test-decoding/small_bunny_1080p_60fps.mp4
 T_T_S = /home/ressiwage/projects/frames-decoding/b264t.mkv 
 T_T_S = /home/ressiwage/projects/frames-decoding/b264t_half.mp4
+
+run_test: make_hello
+	cmdbench --iterations 2 --print-averages --print-values --save-json bench.json --save-plot=plot.png "./build/hello $(T_T_S)" && cd temp && python3 ../pgms_to_pngs.py && cd ..
 
 run_test_short: make_hello
 	cmdbench --iterations 2 --print-averages --print-values --save-json bench.json --save-plot=plot.png "./build/hello  $(T_T_S)" && \
@@ -36,25 +37,33 @@ run_test_short: make_hello
 trace_test_short: make_hello
 	ltrace -c -S ./build/hello  $(T_T_S)
 
+pgm_to_images:
+	cd temp && python3 ../pgms_to_pngs.py && cd ..
+
+images_to_video:
+	/bin/python3 /home/ressiwage/projects/test-libav/test-decoding/pngs_to_video.py
+
+clear_temp:
+	rm temp/frame-*
+
 trace_bench: run_test_short trace_test_short
 
-make_remuxing: clean
-	docker run -w /files --rm -it  -v `pwd`:/files leandromoreira/ffmpeg-devel:4.4 \
-	  gcc -L/opt/ffmpeg/lib -I/opt/ffmpeg/include/ /files/2_remuxing.c \
-	  -lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil \
-	  -o /files/build/remuxing
+build_macro: clean
+	gcc -g -L/opt/ffmpeg/lib -I/opt/ffmpeg/include/ 1_extract_macroblocks.c \
+		-lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil \
+		-o ./build/macro
 
-run_remuxing_ts: make_remuxing
-	docker run -w /files --rm -it -v `pwd`:/files leandromoreira/ffmpeg-devel:4.4 /files/build/remuxing /files/small_bunny_1080p_60fps.mp4 /files/remuxed_small_bunny_1080p_60fps.ts
+run_macro: build_macro
+	./build/macro $(T_T_S)
 
-run_remuxing_fragmented_mp4: make_remuxing
-	docker run -w /files --rm -it -v `pwd`:/files leandromoreira/ffmpeg-devel:4.4 /files/build/remuxing /files/small_bunny_1080p_60fps.mp4 /files/fragmented_small_bunny_1080p_60fps.mp4 fragmented
+bench_macro: build_macro
+	cmdbench "./build/macro $(T_T_S)"
 
-make_transcoding: clean
-	docker run -w /files --rm -it  -v `pwd`:/files leandromoreira/ffmpeg-devel:4.4 \
-	  gcc -g -Wall -L/opt/ffmpeg/lib -I/opt/ffmpeg/include/ /files/3_transcoding.c /files/video_debugging.c \
-	  -lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil \
-	  -o /files/build/3_transcoding
+trace_macro: build_macro
+	ltrace -c -S ./build/macro $(T_T_S)
 
-run_transcoding: make_transcoding
-	docker run -w /files --rm -it -v `pwd`:/files leandromoreira/ffmpeg-devel:4.4 ./build/3_transcoding /files/small_bunny_1080p_60fps.mp4 /files/bunny_1s_gop.mp4
+build_me: clean
+	gcc -g -L/opt/ffmpeg/lib -I/home/ressiwage/projects/FFmpeg-nvidia-build/ffmpeg  4_maxim_example.c -lavcodec -lavformat -lavutil -o build/extract_dc   
+
+run_me: build_me
+	./build/extract_dc $(T_T_S)
