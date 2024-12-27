@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.17)
 project(libav_tutorial)
 
+set(FFMPEG_DEV_ROOT /home/ressiwage/projects/FFmpeg-nvidia-build/ffmpeg) 
 # set out directory
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
 # set ffmpeg root directory
 if(NOT FFMPEG_DEV_ROOT)
     message(FATAL_ERROR "set FFMPEG_DEV_ROOT to use ffmpeg libraries")

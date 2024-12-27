@@ -64,7 +64,6 @@ static int decode_packet(const AVPacket *pkt) {
             int mb_height = (video_dec_ctx->height + 15) >> 4; // x/2^4
             video_frame_count++;
 
-            // Only process middle macroblock
             for (int mb_y =0; mb_y < mb_height-1; mb_y++) {
                 for (int mb_x = 0; mb_x < mb_width-1; mb_x++) {
                     int mb_index = mb_y * mb_width + mb_x;
