@@ -2,5 +2,5 @@
 int main()
 {
     long long int a=0x0001000100010001ULL; 
-    printf("%llud", a );
+    printf("%d", 3 << 4 / 20   );
 }

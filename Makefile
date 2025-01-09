@@ -1,5 +1,8 @@
 d_ffmpeg = /home/ressiwage/default-ffmpeg/usr/bin/ffmpeg
 d_ffmpeg = ffmpeg
+# i_ffmpeg_path = /home/ressiwage/projects/FFmpeg-nvidia-build/ffmpeg
+i_ffmpeg_path = /home/ressiwage/projects/ffmpeg-build/FFmpeg-nvidia-build/ffmpeg
+
 
 usage:
 	echo "make fetch_small_bunny_video && make run_hello"
@@ -16,13 +19,13 @@ fetch_small_bunny_video:
 	./fetch_bbb_video.sh
 
 make_hello: clean 
-	gcc -g -L/usr/local/lib -I/home/ressiwage/projects/FFmpeg-nvidia-build/ffmpeg 0_hello_world.c \
+	gcc -g -L/usr/local/lib -I$(i_ffmpeg_path) 0_hello_world.c \
 		-lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil \
 		-o ./build/hello
 
 run_hello: make_hello 
-	clear_temp;./build/hello /home/ressiwage/projects/frames-decoding/b264t_half.mp4 
-
+	clear_temp;./build/hello /home/ressiwage/projects/files/v264half.mkv
+	
 run_hello_short: make_hello
 	./build/hello /home/ressiwage/projects/test-libav/test-decoding/small_bunny_1080p_60fps.mp4
 
@@ -32,9 +35,13 @@ T_T_S = /home/ressiwage/projects/test-libav/test-decoding/small-bunny-lowres.mp4
 # T_T_S = /home/ressiwage/projects/test-libav/test-decoding/small_bunny_1080p_60fps.mp4
 #  T_T_S = /home/ressiwage/projects/frames-decoding/b264t.mkv
 T_T_S = /home/ressiwage/projects/frames-decoding/b264t_half.mp4
+T_T_S = /home/ressiwage/projects/files/v264half.mkv
+
+# trash_:
+# 	&& cd temp && python3 ../pgms_to_pngs.py && cd ..
 
 run_test: make_hello
-	cmdbench --iterations 2 --print-averages --print-values --save-json bench.json --save-plot=plot.png "./build/hello $(T_T_S)" && cd temp && python3 ../pgms_to_pngs.py && cd ..
+	cmdbench --iterations 2 --print-averages --print-values --save-json bench.json --save-plot=plot.png "./build/hello $(T_T_S)" 
 
 run_test_short: make_hello
 	cmdbench --iterations 2 --print-averages --print-values --save-json bench.json --save-plot=plot.png "./build/hello  $(T_T_S)" && \
